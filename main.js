@@ -4,8 +4,7 @@ const fs = require('fs');
 
 const url = 'http://www.tesouro.fazenda.gov.br/tesouro-direto-precos-e-taxas-dos-titulos';
 let result = {};
-let rescue = {};
-let investmentOptions = [];
+
 
 requestHTML(url, (error, html) => {
     if (!error) {
@@ -17,7 +16,9 @@ requestHTML(url, (error, html) => {
 
                 var type = '';
                 var title = [];
-                let investment = {};
+                let redeem = {};
+                let rescueOption  = {};
+                let rescueOptions = [];
 
                 $(this).children().children().each(function (index, element) {
                     switch ($(this).attr('class')) {
@@ -30,36 +31,77 @@ requestHTML(url, (error, html) => {
 
                         case 'tituloprefixado':
                             if (type !== '') {
-                                rescue[type] = investmentOptions;
-                                investmentOptions = [];
+                                redeem[type] = rescueOptions;
+                                rescueOptions = [];
                             }
                             type = $(this).children().children().text();
                             break;
 
                         case 'camposTesouroDireto':
                             $(this).children().each(function (index, element) {
-                                investment[title[index]] = $(this).text();
+                                rescueOption[title[index]] = $(this).text();
                             });
 
-                            var copy = Object.assign({}, investment);
+                            var copy = Object.assign({}, rescueOption);
+                            rescueOptions = rescueOptions.concat(copy);
+                            break;
+
+                        default:
+                            console.log('Classe de elemento dos resgates invalida, revisar as classes dos coponentes usadas no site do Tesouro Direto');
+                            break;
+                    }
+                });
+                redeem[type] = rescueOptions;
+
+                result['Titulos disponiveis para resgate'] = redeem;
+                
+            }else {
+
+                var type = '';
+                var title = [];
+                let invest = {};
+                let investmentOption = {};
+                let investmentOptions = [];
+
+                $(this).children().children().each(function (index, element) {
+                    switch ($(this).attr('class')) {
+
+                        case 'tabelaTitulo':
+                            $(this).children().each(function (index, element) {
+                                title.push($(this).children().children().text());
+                            });
+                            break;
+
+                        case 'tituloprefixado':
+                            if (type !== '') {
+                                invest[type] = investmentOptions;
+                                investmentOptions = [];
+                            }
+                            type = $(this).children().children().text();
+                            break;
+
+                        case 'camposTesouroDireto ':
+                            $(this).children().each(function (index, element) {
+                                investmentOption[title[index]] = $(this).text();
+                            });
+
+                            var copy = Object.assign({}, investmentOption);
                             investmentOptions = investmentOptions.concat(copy);
                             break;
 
                         default:
-                            console.log('Classe de elemento invalida, revisar as classes dos coponentes usadas no site do Tesouro Direto');
+                            console.log('Classe de elemento dos investimentos invalida, revisar as classes dos coponentes usadas no site do Tesouro Direto');
                             break;
                     }
                 });
-                rescue[type] = investmentOptions;
+                invest[type] = investmentOptions;
 
-                result['Titulos disponiveis para resgate Resgate'] = rescue;
+                result['Titulos disponiveis para investimento'] = invest;
+            }
+        });
 
-                fs.writeFile('resultado.json', JSON.stringify(result, null, 4), function (err) {
-                    console.log('JSON escrito com sucesso! O arquivo está na raiz do projeto.')
-                });
-            }
-            else {
-            }
+        fs.writeFile('resultado.json', JSON.stringify(result, null, 4), function (err) {
+            console.log('JSON escrito com sucesso! O arquivo está na raiz do projeto.')
         });
 
     } else {
