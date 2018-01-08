@@ -1,7 +1,6 @@
+const request = require('request');
 const express = require('express');
 const app = express();
-
-const request = require('request');
 
 const requestHTML = (url, callback) => {
     app.get('/', (req, res) => {
@@ -11,7 +10,7 @@ const requestHTML = (url, callback) => {
             }else{
                 callback(error);
             }
-        })
+        });
     });
 };
 
